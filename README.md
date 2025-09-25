@@ -1,15 +1,7 @@
-# cf_ai_chat_assistant
+# AI Chat Assistant Project
 
-**Cloudflare AI-Powered Chat Assistant** - A production-ready AI chat application built on Cloudflare's platform for the Cloudflare Internship Assignment.
+**AI Chat Assistant** - A production-ready AI chat application built on Cloudflare's platform .
 
-## 🎯 Assignment Requirements Met
-
-This project demonstrates the integration of all required components:
-
-- **🤖 LLM**: Meta's Llama 3.3 via Cloudflare Workers AI
-- **⚙️ Workflow/Coordination**: Cloudflare Durable Objects + custom workflow system
-- **💬 User Input**: Real-time chat + voice interface using Cloudflare Pages
-- **🧠 Memory/State**: Persistent conversation history and context management
 
 ## Architecture
 
@@ -30,9 +22,8 @@ This project demonstrates the integration of all required components:
 
 ## Features
 
-- 🤖 **AI-Powered Responses**: Uses Llama 3.3 for intelligent conversation
-- 💬 **Real-time Chat**: WebSocket-based real-time communication
-- 🧠 **Context Memory**: Maintains conversation history and context
+- 🤖 **AI Responses**: Uses Llama 3.3 for intelligent conversation
+- 💬 **Real time Chat**: WebSocket-based real-time communication
 - 🎯 **Session Management**: Individual chat sessions with persistent state
 - 🌐 **Global Edge**: Deployed on Cloudflare's global network
 - ⚡ **Low Latency**: Fast responses with edge computing
@@ -140,7 +131,3 @@ npm run dev
 
 
 ```
-
-## License
-
-MIT
