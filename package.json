@@ -1,7 +1,7 @@
 {
   "name": "cloudflare-ai-chat-assistant",
   "version": "1.0.0",
-  "description": "AI-powered chat assistant built on Cloudflare Workers AI with Llama 3.3",
+  "description": "Smart digital helper - AI chat assistant with function calling, RAG, and step-by-step explanations",
   "main": "src/index.js",
   "scripts": {
     "dev": "OPEN_BROWSER=1 ./run-local.sh",

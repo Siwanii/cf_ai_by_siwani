@@ -1,93 +1,369 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chat Assistant</title>
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --bg-primary: linear-gradient(135deg, #d2d0d0 0%, #ffffff 100%);
+            --bg-container: white;
+            --bg-chat: #f9fafb;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --border-color: #e5e7eb;
+            --message-ai-bg: white;
+            --message-ai-text: #333;
+            --message-user-bg: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --code-inline-bg: #f4f4f4;
+            --code-inline-text: #e83e8c;
+        }
+        
+        :root[data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            --bg-container: #1e1e1e;
+            --bg-chat: #252525;
+            --text-primary: #e5e5e5;
+            --text-secondary: #a0a0a0;
+            --border-color: #404040;
+            --message-ai-bg: #2a2a2a;
+            --message-ai-text: #e5e5e5;
+            --message-user-bg: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            --code-bg: #1a1a1a;
+            --code-text: #d4d4d4;
+            --code-inline-bg: #3a3a3a;
+            --code-inline-text: #ff79c6;
+        }
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #d2d0d0 0%, #ffffff 100%);
+            background: var(--bg-primary);
             min-height: 100vh;
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
         }
         .container {
-            background: white;
+            background: var(--bg-container);
             border-radius: 1px;
             padding: 30px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            transition: background 0.3s ease;
         }
         .header {
             text-align: center;
             margin-bottom: 30px;
+            position: relative;
         }
         .header h1 {
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 10px;
         }
-        .status {
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--bg-container);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
         }
-        .status.healthy {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        .theme-toggle:hover {
+            border-color: #3b82f6;
+        }
+        .status-indicator {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        .status-indicator.offline .pulse-dot {
+            background-color: #ef4444;
+            animation: none;
         }
         .chat-container {
-            border: 2px solid #e5e7eb;
-            border-radius: 1px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
             min-height: 300px;
-            background: #f9fafb;
-        }
-        .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 80%;
-        }
-        .user-message {
-            background: #3b82f6;
-            color: white;
-            margin-left: auto;
-        }
-        .ai-message {
-            background: #e5e7eb;
-            color: #333;
-        }
-        .input-container {
+            background: var(--bg-chat);
             display: flex;
+            flex-direction: column;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message-wrapper {
+            display: flex;
+            align-items: flex-start;
             gap: 10px;
             margin-bottom: 20px;
+        }
+        .message-wrapper.user {
+            flex-direction: row-reverse;
+        }
+        .message-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .message-icon.ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .message-icon.user {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        .message {
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 75%;
+            line-height: 1.5;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .user-message {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-message {
+            background: var(--message-ai-bg);
+            color: var(--message-ai-text);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        .message strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        .user-message strong {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .ai-message strong {
+            color: var(--text-secondary);
+        }
+        .message-content {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .message-content pre {
+            white-space: pre !important;
+            word-wrap: normal !important;
+            overflow-x: auto !important;
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
+            tab-size: 4;
+            -moz-tab-size: 4;
+        }
+        .message-content pre code {
+            white-space: pre !important;
+            display: block;
+            overflow-x: auto;
+            padding: 0;
+            background: transparent;
+            color: inherit;
+            font-size: inherit;
+            font-family: inherit;
+            word-wrap: normal;
+        }
+        .code-block-wrapper {
+            position: relative;
+            margin: 12px 0;
+        }
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--code-text);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s ease, background 0.2s ease;
+            z-index: 10;
+        }
+        .code-block-wrapper:hover .copy-button {
+            opacity: 1;
+        }
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .copy-button.copied {
+            background: #10b981;
+            color: white;
+        }
+        .message-content code {
+            word-break: break-all;
+            background: var(--code-inline-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--code-inline-text);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--bg-container);
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            padding: 4px 4px 4px 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-top: auto;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .input-container:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         .input-container input {
             flex: 1;
             padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 1px;
+            border: none;
+            border-radius: 24px;
             font-size: 16px;
+            outline: none;
+            background: transparent;
         }
-        .input-container button {
-            padding: 12px 24px;
+        .input-left-icons {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding-left: 4px;
+        }
+        .input-icons {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding-right: 8px;
+        }
+        .file-input-hidden {
+            display: none;
+        }
+        .attached-files {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0;
+            padding: 8px;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+        .attached-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            font-size: 13px;
+        }
+        .attached-file .remove-file {
+            cursor: pointer;
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .icon-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+            color: #6b7280;
+        }
+        .icon-button:hover {
+            background: #f3f4f6;
+            color: #3b82f6;
+        }
+        .icon-button:active {
+            transform: scale(0.95);
+        }
+        .icon-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .icon-button.send {
             background: #3b82f6;
             color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
         }
-        .input-container button:hover {
+        .icon-button.send:hover {
             background: #2563eb;
         }
-        .input-container button:disabled {
+        .icon-button.send:disabled {
             background: #9ca3af;
-            cursor: not-allowed;
         }
         .loading {
             text-align: center;
@@ -101,82 +377,357 @@
             border-radius: 8px;
             margin-bottom: 10px;
         }
-        .info {
-            background: #eff6ff;
-            color: #1e40af;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .quick-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+        .chip {
+            padding: 8px 16px;
+            background: var(--bg-container);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .chip:hover {
+            background: var(--bg-chat);
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .chip:active {
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 AI Chat Assistant</h1>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+                <span id="theme-icon">🌙</span> <span id="theme-text">Dark</span>
+            </button>
+            <div id="statusIndicator" class="status-indicator">
+                <div class="pulse-dot"></div>
+                <span>Live</span>
+            </div>
+            <h1>🤖 AI Agent</h1>
             <p>Powered by Cloudflare Workers AI (Llama 3.3)</p>
-        </div>
-
-        <div id="status" class="status">
-            <div class="loading">Checking server status...</div>
         </div>
         
         <div class="chat-container" id="chatContainer">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message-wrapper ai">
+                    <div class="message-icon ai">🤖</div>
             <div class="message ai-message">
-                <strong>AI Assistant:</strong> Hello! I'm your AI assistant powered by Llama 3.3 on Cloudflare Workers AI. How can I help you today?
+                        <strong>AI Agent</strong>
+                        <div style="margin-top: 4px;">Hi! I'm your AI assistant.What would you like help with?</div>
+                    </div>
+                </div>
             </div>
+            
+            <div class="quick-chips" id="quickChips">
+                <div class="chip" onclick="sendChipMessage('What is Cloudflare Workers AI?')">What is Cloudflare Workers AI?</div>
+                <div class="chip" onclick="sendChipMessage('Explain how merge sort works')">Explain how merge sort works</div>
+                <div class="chip" onclick="sendChipMessage('Explain how binary search works')">Explain how binary search works</div>
+                <div class="chip" onclick="sendChipMessage('How do I prepare for a software engineering interview?')">How do I prepare for a software engineering interview?</div>
+                <div class="chip" onclick="sendChipMessage('Write a professional email to request a meeting')">Write a professional email to request a meeting</div>
+                <div class="chip" onclick="sendChipMessage('Explain how React hooks work')">Explain how React hooks work</div>
         </div>
 
         <div class="input-container">
-            <input type="text" id="messageInput" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()" id="sendButton">Send</button>
+                <div class="input-left-icons">
+                    <button class="icon-button" id="attachButton" onclick="document.getElementById('fileInput').click()" title="Attach file (PDF/Text: max 10MB, Images: max 5MB/5120 KB)">
+                        ➕
+                    </button>
+                    <input type="file" id="fileInput" class="file-input-hidden" accept=".pdf,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.bmp" multiple onchange="handleFileSelect(event)" title="Upload files: PDF/Text (max 10MB), Images (max 5MB/5120 KB)">
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <div id="attachedFiles" class="attached-files" style="display: none;"></div>
+                    <input type="text" id="messageInput" placeholder="Type your message here or paste a URL..." onkeypress="handleKeyPress(event)" onpaste="handlePaste(event)">
+                </div>
+                <div class="input-icons">
+                    <button class="icon-button" id="voiceButton" onclick="toggleVoiceInput()" title="Voice input">
+                        🎤
+                    </button>
+                    <button class="icon-button send" id="sendButton" onclick="sendMessage()" title="Send message">
+                        ✈️
+                    </button>
+                </div>
         </div>
-
-        <div class="info">
-            <strong>Test Commands:</strong><br>
-            • "Hello" - Greeting response<br>
-            • "What is Cloudflare Workers AI?" - Technical explanation<br>
-            • "Tell me about programming" - Technical discussion<br>
-            • Any other question - General AI response
         </div>
     </div>
 
     <script>
         let sessionId = 'demo-session-' + Date.now();
         let isLoading = false;
+        let attachedFiles = [];
+        let attachedUrl = null;
+        let conversationHistory = []; // Track conversation history
 
-        // Check server status on load
+        // Check server status on load and periodically
         async function checkStatus() {
             try {
                 const response = await fetch('http://localhost:8787/api/health');
                 const data = await response.json();
                 
-                document.getElementById('status').innerHTML = `
-                    <strong>✅ Server Status:</strong> ${data.status}<br>
-                    <strong>Service:</strong> ${data.service}<br>
-                    <strong>Version:</strong> ${data.version}<br>
-                    <strong>Mode:</strong> ${data.mode || 'production'}
-                `;
-                document.getElementById('status').className = 'status healthy';
+                // Update status indicator to show online
+                const indicator = document.getElementById('statusIndicator');
+                indicator.className = 'status-indicator';
+                indicator.innerHTML = '<div class="pulse-dot"></div><span>Live</span>';
+                
+                // Check again in 30 seconds
+                setTimeout(checkStatus, 30000);
             } catch (error) {
-                document.getElementById('status').innerHTML = `
-                    <strong>❌ Server Error:</strong> ${error.message}<br>
-                    Make sure the server is running on port 8787
-                `;
-                document.getElementById('status').className = 'status error';
+                // Update status indicator to show offline
+                const indicator = document.getElementById('statusIndicator');
+                indicator.className = 'status-indicator offline';
+                indicator.innerHTML = '<div class="pulse-dot"></div><span>Offline</span>';
+                
+                // Retry in 5 seconds
+                setTimeout(checkStatus, 5000);
             }
         }
 
-        // Send message function
+        // Send chip message function
+        function sendChipMessage(message) {
+            const input = document.getElementById('messageInput');
+            input.value = message;
+            sendMessage();
+        }
+
+        // Handle file selection
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB = 5120 KB
+            const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024; // 10MB
+            
+            // Validate file sizes
+            for (const file of files) {
+                const isImage = file.type.startsWith('image/') || 
+                               file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/);
+                const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_DOCUMENT_SIZE;
+                const maxSizeKB = isImage ? 5120 : 10240;
+                const maxSizeMB = isImage ? 5 : 10;
+                
+                if (file.size > maxSize) {
+                    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    const fileSizeKB = (file.size / 1024).toFixed(0);
+                    alert(`❌ File too large: ${file.name}\n\nSize: ${fileSizeMB} MB (${fileSizeKB} KB)\nMax size: ${maxSizeMB} MB (${maxSizeKB} KB)\n\nPlease upload a smaller file.`);
+                    return;
+                }
+            }
+            
+            attachedFiles = [...attachedFiles, ...files];
+            updateAttachedFilesDisplay();
+        }
+
+        // Handle paste (for URLs)
+        function handlePaste(event) {
+            setTimeout(() => {
+                const input = document.getElementById('messageInput');
+                const pastedText = input.value.trim();
+                // Check if the pasted text is a URL
+                if (pastedText && (pastedText.startsWith('http://') || pastedText.startsWith('https://'))) {
+                    attachedUrl = pastedText;
+                    input.value = '';
+                    updateAttachedFilesDisplay();
+                }
+            }, 10);
+        }
+
+        // Update attached files display
+        function updateAttachedFilesDisplay() {
+            const container = document.getElementById('attachedFiles');
+            container.innerHTML = '';
+            
+            if (attachedFiles.length === 0 && !attachedUrl) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'flex';
+            
+            // Show URL if attached
+            if (attachedUrl) {
+                const urlDiv = document.createElement('div');
+                urlDiv.className = 'attached-file';
+                urlDiv.innerHTML = `
+                    <span>🔗 ${attachedUrl.substring(0, 40)}${attachedUrl.length > 40 ? '...' : ''}</span>
+                    <span class="remove-file" onclick="removeUrl()">×</span>
+                `;
+                container.appendChild(urlDiv);
+            }
+            
+            // Show files with size information
+            attachedFiles.forEach((file, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'attached-file';
+                const fileSizeKB = (file.size / 1024).toFixed(0);
+                const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                const isImage = file.type.startsWith('image/') || 
+                               file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/);
+                const maxSizeKB = isImage ? 5120 : 10240;
+                const sizeText = file.size < 1024 * 1024 ? `${fileSizeKB} KB` : `${fileSizeMB} MB (${fileSizeKB} KB)`;
+                const maxText = isImage ? 'max 5MB' : 'max 10MB';
+                fileDiv.innerHTML = `
+                    <span>📎 ${file.name} <small style="color: #666;">(${sizeText}, ${maxText})</small></span>
+                    <span class="remove-file" onclick="removeFile(${index})">×</span>
+                `;
+                container.appendChild(fileDiv);
+            });
+        }
+
+        // Remove file
+        function removeFile(index) {
+            attachedFiles.splice(index, 1);
+            updateAttachedFilesDisplay();
+        }
+
+        // Remove URL
+        function removeUrl() {
+            attachedUrl = null;
+            updateAttachedFilesDisplay();
+        }
+
+        // Send message function (handles text, files, and URLs)
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             
-            if (!message || isLoading) return;
+            // Check if there's anything to send
+            if ((!message && attachedFiles.length === 0 && !attachedUrl) || isLoading) return;
 
-            // Add user message to chat
-            addMessage(message, 'user');
+            // Show attached files/URL in chat BEFORE uploading
+            let fileDisplayMessage = '';
+            if (attachedFiles.length > 0 || attachedUrl) {
+                if (attachedUrl) {
+                    fileDisplayMessage += `🔗 ${attachedUrl}\n`;
+                }
+                if (attachedFiles.length > 0) {
+                    fileDisplayMessage += `📎 ${attachedFiles.map(f => f.name).join(', ')}\n`;
+                }
+            }
+            
+            // Combine file display with text message
+            let combinedMessage = '';
+            if (fileDisplayMessage) {
+                combinedMessage = fileDisplayMessage.trim();
+            }
+            if (message) {
+                if (combinedMessage) {
+                    combinedMessage += '\n\n' + message;
+                } else {
+                    combinedMessage = message;
+                }
+            }
+            
+            // If only files/URL attached without message, create a default message
+            let finalMessage = message || (attachedUrl ? `Process this URL: ${attachedUrl}` : 'Process these files');
+            
+            // Show files/URL and message in chat container BEFORE uploading
+            // This ensures user sees what they're sending
+            if (combinedMessage) {
+                addMessage(combinedMessage, 'user');
+            } else if (attachedFiles.length > 0 || attachedUrl) {
+                // Show files/URL even if no text message
+                addMessage(fileDisplayMessage.trim(), 'user');
+            }
+            
+            // Handle file/URL uploads
+            if (attachedFiles.length > 0 || attachedUrl) {
+                try {
+                    const formData = new FormData();
+                    
+                    if (attachedUrl) {
+                        formData.append('url', attachedUrl);
+                    }
+                    
+                    attachedFiles.forEach(file => {
+                        formData.append('file', file);
+                    });
+                    
+                    // Upload files/URL
+                    const uploadResponse = await fetch('http://localhost:8787/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!uploadResponse.ok) {
+                        const errorData = await uploadResponse.json().catch(() => ({ error: 'Upload failed' }));
+                        let errorMsg = `❌ Upload failed: ${errorData.error || 'Unknown error'}`;
+                        if (errorData.details) {
+                            errorMsg += `\n\nDetails: ${errorData.details}`;
+                        }
+                        if (errorData.suggestion) {
+                            errorMsg += `\n\n💡 Suggestion: ${errorData.suggestion}`;
+                        }
+                        addMessage(errorMsg, 'ai', false, true);
+                        return;
+                    }
+                    
+                    const uploadData = await uploadResponse.json();
+                    
+                    if (!uploadData.success) {
+                        let errorMsg = `❌ Upload failed: ${uploadData.error || 'Unknown error'}`;
+                        if (uploadData.details) {
+                            errorMsg += `\n\nDetails: ${uploadData.details}`;
+                        }
+                        if (uploadData.suggestion) {
+                            errorMsg += `\n\n💡 Suggestion: ${uploadData.suggestion}`;
+                        }
+                        addMessage(errorMsg, 'ai', false, true);
+                        return;
+                    }
+                    
+                    console.log(`✅ Upload successful: ${uploadData.chunks || 0} chunks created`);
+                    
+                    // Store document ID for image queries (race condition fix)
+                    if (uploadData.documentId) {
+                        // Check if uploaded file is an image
+                        const isImage = attachedFiles.some(file => {
+                            const ext = file.name.toLowerCase().split('.').pop();
+                            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext);
+                        });
+                        
+                        if (isImage) {
+                            // Store the most recent image document ID in sessionStorage
+                            sessionStorage.setItem('lastImageDocumentId', uploadData.documentId);
+                            console.log(`📸 Stored image document ID: ${uploadData.documentId}`);
+                        }
+                    }
+                } catch (uploadError) {
+                    console.error('Upload error:', uploadError);
+                    
+                    // Provide more detailed error messages
+                    let errorMsg = '❌ Upload failed: ';
+                    if (uploadError.message === 'Failed to fetch' || uploadError.name === 'TypeError') {
+                        errorMsg += 'Failed to connect to the server.\n\n';
+                        errorMsg += 'Please check:\n';
+                        errorMsg += '1. The dev server is running: npm run dev\n';
+                        errorMsg += '2. The server is accessible at http://localhost:8787\n';
+                        errorMsg += '3. Check browser console (F12) for more details';
+                    } else {
+                        errorMsg += uploadError.message;
+                    }
+                    
+                    addMessage(errorMsg, 'ai', false, true);
+                    return;
+                }
+            }
+            
+            // Clear inputs
             input.value = '';
+            attachedFiles = [];
+            attachedUrl = null;
+            updateAttachedFilesDisplay();
             
             // Show loading
             const loadingId = addMessage('AI is thinking...', 'ai', true);
@@ -184,31 +735,171 @@
             document.getElementById('sendButton').disabled = true;
 
             try {
-                const response = await fetch('http://localhost:8787/api/chat', {
+                // Add user message to conversation history
+                conversationHistory.push({
+                    role: 'user',
+                    content: finalMessage || 'Process the uploaded documents'
+                });
+                
+                // Create AbortController for timeout handling
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+                
+                // Check if this is an image query and we have a recent document ID
+                const lowerMessage = (finalMessage || '').toLowerCase();
+                const isImageQuery = lowerMessage.includes('image') || 
+                                    lowerMessage.includes('picture') || 
+                                    lowerMessage.includes('photo') ||
+                                    lowerMessage.includes('what\'s there in') ||
+                                    lowerMessage.includes('what is there in') ||
+                                    lowerMessage.includes('what\'s in') ||
+                                    lowerMessage.includes('what is in') ||
+                                    lowerMessage.includes('what\'s this') ||
+                                    lowerMessage.includes('what is this') ||
+                                    lowerMessage.includes('what do you see');
+                
+                const lastImageDocumentId = isImageQuery ? sessionStorage.getItem('lastImageDocumentId') : null;
+                
+                let response;
+                try {
+                    response = await fetch('http://localhost:8787/api/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        message: message,
-                        sessionId: sessionId
-                    })
+                            message: finalMessage || 'Process the uploaded documents',
+                            sessionId: sessionId,
+                            conversationHistory: conversationHistory,
+                            lastImageDocumentId: lastImageDocumentId // Send document ID for race condition fix
+                        }),
+                        signal: controller.signal
                 });
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
+                    // Check if it's an abort error (timeout)
+                    if (fetchError.name === 'AbortError') {
+                        throw new Error('Request timeout: The request took longer than 60 seconds. Please try again with a simpler question.');
+                    }
+                    // Re-throw other fetch errors
+                    throw fetchError;
+                }
+                clearTimeout(timeoutId);
+
+                // Check if response is ok before parsing JSON
+                if (!response.ok) {
+                    // Handle 504 Gateway Timeout specifically
+                    if (response.status === 504) {
+                        throw new Error('504 Gateway Timeout: The request took too long. Please try simplifying your question or try again.');
+                    }
+                    
+                    const errorText = await response.text();
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(errorText);
+                    } catch (e) {
+                        errorData = { error: `Server error: ${response.status} ${response.statusText}`, details: errorText };
+                    }
+                    throw new Error(errorData.error || `Server error: ${response.status} ${response.statusText}`);
+                }
 
                 const data = await response.json();
                 
                 // Remove loading message
                 removeMessage(loadingId);
                 
-                // Add AI response
-                addMessage(data.response, 'ai');
+                // Check for errors first
+                if (data.error) {
+                    addMessage(`Error: ${data.error}${data.details ? ' - ' + data.details : ''}`, 'ai', false, true);
+                    console.error('API Error:', data);
+                    return;
+                }
                 
-                console.log('Response:', data);
+                // Add AI response with agent metadata
+                let responseText = data.response;
+                
+                // Handle undefined response
+                if (!responseText || responseText === 'undefined') {
+                    responseText = "I apologize, but I couldn't generate a response. Please try again.";
+                    console.warn('Received undefined or empty response from API');
+                }
+                
+                // Don't show tool usage - keep responses clean
+                // if (data.agent && data.agent.usedTools && data.agent.toolsUsed.length > 0) {
+                //     responseText += `\n\n🔧 <em style="font-size: 12px; color: #666;">Agent used tools: ${data.agent.toolsUsed.join(', ')}</em>`;
+                // }
+                
+                // Display response with markdown formatting
+                addMessage(responseText, 'ai');
+                
+                // Show confidence indicator if available
+                if (data.confidence && data.confidence === 'medium') {
+                    const lastMessage = document.querySelector('.message-wrapper.ai:last-child .message-content');
+                    if (lastMessage) {
+                        lastMessage.innerHTML = '<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 8px; margin-bottom: 8px; border-radius: 4px; font-size: 0.9em;">⚠️ Some information may be uncertain</div>' + lastMessage.innerHTML;
+                    }
+                }
+                
+                // Add AI response to conversation history
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: responseText
+                });
+                
+                // Keep conversation history manageable (last 20 messages)
+                if (conversationHistory.length > 20) {
+                    conversationHistory = conversationHistory.slice(-20);
+                }
+                
+                console.log('Agent Response:', data);
+                if (data.agent) {
+                    console.log('Agent Metadata:', {
+                        toolsUsed: data.agent.toolsUsed,
+                        iterations: data.agent.iterations,
+                        functionCalls: data.agent.functionCallsExecuted
+                    });
+                }
                 
             } catch (error) {
                 removeMessage(loadingId);
-                addMessage(`Error: ${error.message}`, 'ai', false, true);
-                console.error('Error:', error);
+                
+                // Provide more detailed error messages
+                let errorMessage = 'Error: ';
+                
+                // Check for timeout errors (504 Gateway Timeout)
+                if (error.message.includes('504') || error.message.includes('Gateway Timeout') || error.message.includes('timeout')) {
+                    errorMessage += 'Request timed out. The AI is taking too long to respond.\n\n';
+                    errorMessage += 'This can happen when:\n';
+                    errorMessage += '1. The AI needs to use multiple tools\n';
+                    errorMessage += '2. The request is complex\n';
+                    errorMessage += '3. The server is under heavy load\n\n';
+                    errorMessage += 'Please try:\n';
+                    errorMessage += '1. Simplifying your question\n';
+                    errorMessage += '2. Waiting a moment and trying again\n';
+                    errorMessage += '3. Breaking your request into smaller parts';
+                } else if (error.message === 'Failed to fetch' || error.name === 'TypeError' || error.message.includes('fetch')) {
+                    errorMessage += 'Failed to connect to the server.\n\n';
+                    errorMessage += 'Possible causes:\n';
+                    errorMessage += '1. Server is not running - Run: npm run dev\n';
+                    errorMessage += '2. Browser blocked the request (CORS/security)\n';
+                    errorMessage += '3. Network connectivity issue\n';
+                    errorMessage += '4. Server crashed or restarted\n\n';
+                    errorMessage += 'Please try:\n';
+                    errorMessage += '1. Check if server is running: curl http://localhost:8787/api/health\n';
+                    errorMessage += '2. Open browser console (F12) for more details\n';
+                    errorMessage += '3. Try refreshing the page\n';
+                    errorMessage += '4. Restart the dev server if needed';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                addMessage(errorMessage, 'ai', false, true);
+                console.error('Error details:', {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack,
+                    error: error
+                });
             } finally {
                 isLoading = false;
                 document.getElementById('sendButton').disabled = false;
@@ -217,21 +908,46 @@
 
         // Add message to chat
         function addMessage(text, sender, isTemporary = false, isError = false) {
-            const container = document.getElementById('chatContainer');
-            const messageDiv = document.createElement('div');
+            const container = document.getElementById('chatMessages');
+            const messageWrapper = document.createElement('div');
             const messageId = 'msg-' + Date.now() + '-' + Math.random();
             
-            messageDiv.id = messageId;
+            messageWrapper.id = messageId;
+            messageWrapper.className = `message-wrapper ${sender}`;
+            
+            // Create icon
+            const icon = document.createElement('div');
+            icon.className = `message-icon ${sender}`;
+            if (sender === 'ai') {
+                icon.textContent = '🤖';
+            } else {
+                icon.textContent = '👤';
+            }
+            
+            // Create message bubble
+            const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
             
             if (isError) {
                 messageDiv.style.background = '#fef2f2';
                 messageDiv.style.color = '#dc2626';
+                messageDiv.style.border = '1px solid #fecaca';
             }
             
-            messageDiv.innerHTML = `<strong>${sender === 'user' ? 'You' : 'AI Assistant'}:</strong> ${text}`;
+            const senderName = sender === 'user' ? 'You' : 'AI Agent';
+            // Format markdown and improve readability
+            const formattedText = formatMarkdown(text);
+            messageDiv.innerHTML = `<strong>${senderName}</strong><div style="margin-top: 4px;" class="message-content">${formattedText}</div>`;
             
-            container.appendChild(messageDiv);
+            messageWrapper.appendChild(icon);
+            messageWrapper.appendChild(messageDiv);
+            container.appendChild(messageWrapper);
+            
+            // Highlight code blocks after adding message (with delay to ensure DOM is ready and Prism is loaded)
+            setTimeout(() => {
+                highlightCodeBlocks();
+            }, 300);
+            
             container.scrollTop = container.scrollHeight;
             
             return isTemporary ? messageId : null;
@@ -245,12 +961,229 @@
             }
         }
 
+        // Format markdown text for better display
+        function formatMarkdown(text) {
+            if (!text) return '';
+            
+            let formatted = text;
+            
+            // STEP 1: Extract and preserve code blocks FIRST (before any other processing)
+            const codeBlocks = [];
+            let codeBlockIndex = 0;
+            
+            // Replace code blocks with placeholders to preserve them
+            formatted = formatted.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+                const placeholder = `__CODE_BLOCK_${codeBlockIndex}__`;
+                codeBlocks.push({
+                    lang: lang || '',
+                    code: code, // Preserve original code with all whitespace
+                    placeholder: placeholder
+                });
+                codeBlockIndex++;
+                return placeholder;
+            });
+            
+            // STEP 2: Escape HTML (but not code blocks - they're placeholders)
+            formatted = formatted.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // STEP 3: Process other markdown (TL;DR, bold, headings, etc.)
+            // TL;DR section - highlight it (remove TL;DR text, keep blue box)
+            formatted = formatted.replace(/\*\*TL;DR:\*\*(.*?)(?=\n\n|\*\*|$)/gi, '<div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px; margin: 12px 0; border-radius: 4px;"><span style="color: #1e3a8a;">$1</span></div>');
+            
+            // Bold text (**text**)
+            formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            
+            // Inline code (`code`) - but not inside code blocks
+            formatted = formatted.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+            
+            // Headings (## Heading)
+            formatted = formatted.replace(/^### (.+)$/gm, '<h3 style="margin: 16px 0 8px 0; font-size: 1.1em; font-weight: 600; color: #1f2937;">$1</h3>');
+            formatted = formatted.replace(/^## (.+)$/gm, '<h2 style="margin: 20px 0 12px 0; font-size: 1.3em; font-weight: 700; color: #111827; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">$1</h2>');
+            formatted = formatted.replace(/^# (.+)$/gm, '<h1 style="margin: 24px 0 16px 0; font-size: 1.5em; font-weight: 700; color: #030712;">$1</h1>');
+            
+            // Numbered steps (Step 1:, Step 2:, etc.)
+            formatted = formatted.replace(/\*\*Step (\d+):\*\*(.+?)(?=\*\*Step \d+:|$)/g, '<div style="margin: 12px 0; padding: 12px; background: #f9fafb; border-left: 4px solid #6366f1; border-radius: 4px;"><strong style="color: #4f46e5;">Step $1:</strong>$2</div>');
+            
+            // Bullet points
+            formatted = formatted.replace(/^[\*\-\+] (.+)$/gm, '<li style="margin: 6px 0; padding-left: 8px;">$1</li>');
+            // Wrap consecutive <li> in <ul>
+            formatted = formatted.replace(/(<li[^>]*>.*?<\/li>(?:\s*<li[^>]*>.*?<\/li>)*)/g, '<ul style="margin: 12px 0; padding-left: 24px;">$1</ul>');
+            
+            // Numbered lists
+            formatted = formatted.replace(/^\d+\. (.+)$/gm, '<li style="margin: 6px 0; padding-left: 8px; list-style-type: decimal;">$1</li>');
+            // Wrap consecutive numbered <li> in <ol>
+            formatted = formatted.replace(/(<li[^>]*style="[^"]*list-style-type: decimal[^"]*"[^>]*>.*?<\/li>(?:\s*<li[^>]*style="[^"]*list-style-type: decimal[^"]*"[^>]*>.*?<\/li>)*)/g, '<ol style="margin: 12px 0; padding-left: 24px;">$1</ol>');
+            
+            // STEP 4: Process line breaks (but code blocks are already placeholders)
+            formatted = formatted.replace(/\n\n/g, '<br><br>');
+            formatted = formatted.replace(/\n/g, '<br>');
+            
+            // STEP 5: Restore code blocks with proper formatting (AFTER all other processing)
+            codeBlocks.forEach((block, index) => {
+                const codeId = 'code-' + Date.now() + '-' + index + '-' + Math.random().toString(36).substr(2, 9);
+                const lang = block.lang || 'text';
+                const langClass = block.lang ? `language-${block.lang}` : '';
+                
+                // Escape HTML in code content (but preserve ALL whitespace, indentation, and line breaks)
+                let escapedCode = block.code
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                
+                // Create the code block HTML with proper <pre><code> structure
+                const codeBlockHtml = `<div class="code-block-wrapper">
+                    <button class="copy-button" onclick="copyCode('${codeId}')" title="Copy code">Copy</button>
+                    <pre class="language-${lang}"><code id="${codeId}" class="${langClass}">${escapedCode}</code></pre>
+                </div>`;
+                
+                formatted = formatted.replace(block.placeholder, codeBlockHtml);
+            });
+            
+            return formatted;
+        }
+        
+        // Copy code to clipboard
+        function copyCode(codeId) {
+            const codeElement = document.getElementById(codeId);
+            if (!codeElement) return;
+            
+            const text = codeElement.textContent || codeElement.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const button = codeElement.closest('.code-block-wrapper')?.querySelector('.copy-button');
+                if (button) {
+                    const originalText = button.textContent;
+                    button.textContent = 'Copied!';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+        
+        // Highlight code blocks after rendering
+        function highlightCodeBlocks() {
+            if (window.Prism) {
+                // Find all code blocks and highlight them
+                const codeBlocks = document.querySelectorAll('pre code[class*="language-"]');
+                codeBlocks.forEach((block) => {
+                    try {
+                        Prism.highlightElement(block);
+                    } catch (e) {
+                        console.warn('Prism highlighting error:', e);
+                    }
+                });
+            }
+        }
+        
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+        
+        function toggleTheme() {
+            const htmlElement = document.documentElement;
+            const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            console.log('Theme toggled to:', newTheme); // Debug log
+        }
+        
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (icon && text) {
+                icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+                text.textContent = theme === 'dark' ? 'Light' : 'Dark';
+            }
+        }
+        
+        // Initialize theme on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTheme);
+        } else {
+            initTheme();
+        }
+
         // Handle Enter key
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
         }
+
+        // Voice input functionality
+        let isListening = false;
+        let recognition = null;
+
+        function toggleVoiceInput() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+                return;
+            }
+
+            if (!recognition) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    const voiceButton = document.getElementById('voiceButton');
+                    voiceButton.style.background = '#ef4444';
+                    voiceButton.style.color = 'white';
+                    voiceButton.textContent = '🔴';
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    const input = document.getElementById('messageInput');
+                    input.value = transcript;
+                    isListening = false;
+                    const voiceButton = document.getElementById('voiceButton');
+                    voiceButton.style.background = '';
+                    voiceButton.style.color = '';
+                    voiceButton.textContent = '🎤';
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    isListening = false;
+                    const voiceButton = document.getElementById('voiceButton');
+                    voiceButton.style.background = '';
+                    voiceButton.style.color = '';
+                    voiceButton.textContent = '🎤';
+                };
+
+                recognition.onend = function() {
+                    isListening = false;
+                    const voiceButton = document.getElementById('voiceButton');
+                    voiceButton.style.background = '';
+                    voiceButton.style.color = '';
+                    voiceButton.textContent = '🎤';
+                };
+            }
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        // Old document upload functions removed - now using + button in input container
+
+        // Initialize
+        checkStatus();
 
         // Initialize
         checkStatus();

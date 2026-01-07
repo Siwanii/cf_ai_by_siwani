@@ -1,9 +1,15 @@
 name = "ai-chat-assistant"
 main = "src/index.js"
-compatibility_date = "2024-12-18"
+compatibility_date = "2025-01-01"
+
+# ---------- DEFAULT (local/dev) ----------
 
 [ai]
 binding = "AI"
+
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "rag-documents"
 
 [[durable_objects.bindings]]
 name = "CHAT_SESSION"
@@ -13,11 +19,45 @@ class_name = "ChatSession"
 tag = "v1"
 new_sqlite_classes = ["ChatSession"]
 
+# ---------- PRODUCTION ----------
+
 [env.production]
 name = "ai-chat-assistant-prod"
 
+[env.production.ai]
+binding = "AI"
+
+[[env.production.vectorize]]
+binding = "VECTORIZE"
+index_name = "rag-documents"
+
+[[env.production.durable_objects.bindings]]
+name = "CHAT_SESSION"
+class_name = "ChatSession"
+
+[[env.production.migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChatSession"]
+
+# ---------- STAGING ----------
+
 [env.staging]
 name = "ai-chat-assistant-staging"
+
+[env.staging.ai]
+binding = "AI"
+
+[[env.staging.vectorize]]
+binding = "VECTORIZE"
+index_name = "rag-documents"
+
+[[env.staging.durable_objects.bindings]]
+name = "CHAT_SESSION"
+class_name = "ChatSession"
+
+[[env.staging.migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChatSession"]
 
 [dev]
 local_protocol = "http"
