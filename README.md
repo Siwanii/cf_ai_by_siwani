@@ -1,31 +1,14 @@
-# AI Chat Assistant - Smart Digital Helper
+# AgentFlow AI Assistant
 
-**Intelligent AI Agent** - A AI chat application built on Cloudflare Workers AI with autonomous function calling (tool use) and Retrieval Augmented Generation (RAG) capabilities.
+A smart AI chat assistant built on Cloudflare Workers that can help with programming, answer questions, and even read your documents. Think of it as ChatGPT, but running on Cloudflare's edge network for super fast responses.
 
-## 🎯 Key Features
+## Introduction
 
-- 🤖 **Smart Digital Helper**: Powered by Llama 3.3 with autonomous function calling - the AI decides when to use tools
-- 💻 **Programming & Debugging**: Help with React, .NET, Python, SQL, and more
-- 📚 **Studying & Research**: CS concepts, papers, explanations with step-by-step format
-- 📝 **Writing Assistance**: Emails, resumes, LinkedIn posts, documentation
-- 🧠 **Problem-Solving**: Step-by-step explanations and guidance
-- 🌐 **General Knowledge**: Current events, facts, and information
-- 🚀 **Career Guidance**: Projects, interviews, portfolios
-- 🔧 **Function Calling (Tool Use)**: AI autonomously uses tools like web search, weather, calculator, time, and currency conversion
-- 📚 **RAG (Retrieval-Augmented Generation)**: Upload PDFs, text files, images, or URLs - AI reads and answers questions about your documents
-- 💬 **ChatGPT-like Interface**: Modern, intuitive chat interface with voice input and file attachments
-- 🎨 **Enhanced Formatting**: Beautiful markdown rendering with TL;DR summaries, step-by-step guides, code blocks, and visual hierarchy
-- 🌙 **Dark Mode**: Toggle between light and dark themes with persistent preference
-- ⚡ **Streaming Responses**: Real-time token-by-token streaming for instant feedback
-- 📋 **Code Block Features**: Copy button, syntax highlighting (Prism.js), and proper formatting
-- ⚠️ **Confidence Indicators**: Visual warnings when information may be uncertain
-- 🎤 **Voice Input**: Speak your questions using Web Speech API
-- 📎 **File Attachments**: Upload PDFs, text files, images, or paste URLs directly in chat
-- 💾 **Conversation History**: Persistent chat sessions with context awareness
-- 🔄 **Smart Image Handling**: Automatic retry logic for race conditions (Vectorize indexing delays)
-- ⚡ **Edge Computing**: Deployed on Cloudflare's global network for low latency
+This is an AI-powered chat assistant that combines the power of Llama 3.3 with some clever features. It can autonomously decide when to search the web, check the weather, or do calculations. Plus, you can upload PDFs, images, or text files and ask questions about them - the AI will actually read and understand your documents.
 
-## 🏗️ Architecture
+The cool part? It runs entirely on Cloudflare Workers, so it's fast, scalable, and doesn't require managing any servers. Everything happens at the edge.
+
+## Architecture Diagram
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
@@ -43,354 +26,169 @@
             └──────────────┘    └──────────────┘
 ```
 
-## 🚀 Quick Start
+The frontend is a simple HTML page that talks to a Cloudflare Worker. The Worker handles all the AI logic, manages chat sessions using Durable Objects, and stores document embeddings in Vectorize for the RAG functionality.
+
+## How It Works (Mechanism)
+
+### Function Calling (Tool Use)
+
+When you ask a question, the AI doesn't just rely on its training data. It can actually use tools:
+
+1. **You ask a question** - Like "What's the weather in San Francisco?" or "Who is the president in 2026?"
+2. **AI decides** - The system detects that this needs current information and automatically triggers the `search_web` tool
+3. **Tool executes** - It searches DuckDuckGo and Wikipedia for up-to-date information
+4. **AI responds** - The AI uses the search results to give you an accurate, current answer
+
+The AI has access to several tools:
+- `search_web` - For current events, news, and 2025/2026 information
+- `get_weather` - Current weather for any location
+- `calculate` - Math calculations
+- `get_current_time` - Current date and time
+- `convert_currency` - Currency conversion
+
+### RAG (Retrieval-Augmented Generation)
+
+The document reading feature works like this:
+
+1. **You upload a file** - PDF, text file, image, or paste a URL
+2. **Processing happens**:
+   - For PDFs/text: Extracts text, splits it into chunks, creates embeddings
+   - For images: Uses vision models to generate a detailed description
+3. **Storage** - Everything gets stored in Vectorize (Cloudflare's vector database)
+4. **When you ask questions** - The system finds relevant chunks from your document and includes them in the AI's context
+5. **AI responds** - Using the actual content from your document
+
+The system is smart about handling images - if you upload one and immediately ask about it, it knows Vectorize might still be indexing and will retry automatically.
+
+## Setup
 
 ### Prerequisites
 
-- Node.js 18+ (installed automatically via nvm)
-- Cloudflare account with Workers AI enabled
-- Wrangler CLI installed (`npm install -g wrangler`)
+You'll need:
+- Node.js 18 or higher
+- A Cloudflare account (free tier works fine)
+- Wrangler CLI installed globally
 
-### Setup
+### Installation Steps
 
 1. **Login to Cloudflare**:
    ```bash
    wrangler login
    ```
+   This opens a browser window to authenticate.
 
-2. **Create Vectorize Index** (for RAG):
+2. **Create the Vectorize index** (for document storage):
    ```bash
    wrangler vectorize create rag-documents --dimensions=384 --metric=cosine
    ```
    
-   Or use the setup script:
+   Or just run the setup script:
    ```bash
    ./setup-vectorize.sh
    ```
 
-3. **Run Locally**:
+3. **Install dependencies** (if needed):
    ```bash
-   ./run-local.sh
-   ```
-   
-   Or use npm:
-   ```bash
-   npm run dev
+   npm install
    ```
 
-4. **Access the Application**:
-   - Frontend: http://localhost:8787/cf_ai_chat-assistant/
-   - API: http://localhost:8787/api/health
+That's it! The setup is pretty straightforward.
 
-## 📋 Available Tools (Function Calling)
+## Run the AI Assistant
 
-The AI agent can autonomously use these tools:
-
-1. **`search_web`** - Search the web for current information (uses DuckDuckGo & Wikipedia)
-   - Automatically used for 2025 information, current events, recent news, acquisitions, mergers
-2. **`get_weather`** - Get current weather for any location
-3. **`calculate`** - Perform mathematical calculations
-4. **`get_current_time`** - Get current date and time
-5. **`convert_currency`** - Convert between different currencies
-
-The AI decides when to use these tools based on your questions!
-
-## 📚 RAG (Retrieval-Augmented Generation)
-
-### Supported Document Types
-
-- **PDF files** (.pdf) - Max size: 10MB
-- **Text files** (.txt) - Max size: 10MB
-- **Image files** (.jpg, .jpeg, .png, .gif, .webp, .bmp) - Max size: 5MB (5120 KB)
-- **URLs** - Paste any URL to extract and process content
-
-### How It Works
-
-1. **Upload**: Click the `+` button or paste a URL in the input bar
-2. **Processing**: 
-   - For PDFs/Text: Extracts text, chunks it, creates embeddings, stores in Vectorize
-   - For Images: Uses Cloudflare Workers AI vision models to generate descriptions
-3. **Query**: Ask questions about your document (summarize, explain, analyze, review)
-4. **Response**: AI uses relevant document chunks to answer your questions
-
-### Image Upload & Race Condition Handling
-
-When you upload an image and immediately ask about it, Cloudflare Vectorize takes 15-30 seconds to index the content. The system automatically handles this:
-
-- **Automatic Retry Logic**: If an image isn't found immediately, the system retries with exponential backoff (2s, 4s, 8s, 16s, 32s)
-- **Direct Document ID Queries**: Bypasses similarity search to query by document ID directly
-- **Smart Prioritization**: Always uses the most recently uploaded image, even if multiple images exist
-- **Graceful Fallback**: Clear error messages if the image is still processing after retries
-
-### Example Queries
-
-- "Summarize this document"
-- "Explain the main points"
-- "What does this PDF say about X?"
-- "Analyze this document"
-- "Review my resume"
-- "What's in this image?"
-
-### Technical Details
-
-- **Embedding Model**: `@cf/baai/bge-small-en-v1.5` (384 dimensions)
-- **Chunk Size**: 500 characters with 50 character overlap
-- **Top K Results**: Up to 30 most similar chunks (filtered and prioritized)
-- **Similarity Metric**: Cosine similarity
-- **Image Models**: LLaVA, UForm, Llama Vision (tries multiple models)
-- **Race Condition Handling**: Automatic retry with exponential backoff (5 retries, up to 32s delay)
-- **Image Query Detection**: Smart detection of image-related queries ("what's in this image?", "explain this image", etc.)
-- **Most Recent Image Priority**: Always uses the most recently uploaded image, filtering out older images
-
-### Managing Vectorize Index
-
-To clear old documents/images from Vectorize, you can use the Wrangler CLI:
-```bash
-# List all vectors in the index
-wrangler vectorize query rag-documents --query="test" --top=100
-
-# To delete specific vectors, you'll need to use the Cloudflare API or dashboard
-```
-
-## 🎨 Features
-
-### Interface
-
-- **Modern UI**: Clean, responsive design with Inter font
-- **Dark Mode**: Toggle between light and dark themes (preference saved in localStorage)
-- **Message Bubbles**: AI messages with 🤖 icon, user messages with 👤 icon
-- **Quick Chips**: Clickable suggestion chips for common queries (programming, algorithms, career, etc.)
-- **Status Indicator**: Live/Offline status in header
-- **File Attachments**: Visual display of attached files/URLs with file sizes
-- **Streaming Responses**: Real-time token-by-token display for instant feedback
-- **Enhanced Formatting**: 
-  - TL;DR summaries in highlighted blue boxes (without "TL;DR:" label)
-  - Step-by-step guides with numbered sections
-  - Syntax-highlighted code blocks with Prism.js
-  - Copy button on code blocks (appears on hover)
-  - Proper markdown rendering (headings, lists, bold, inline code)
-  - Visual hierarchy with clear sections
-  - Preserved indentation and line breaks in code
-- **Confidence Indicators**: Warning badges when information may be uncertain
-
-### Voice Input
-
-- Click the 🎤 microphone icon
-- Speak your question
-- Automatic speech-to-text conversion
-
-### File Upload
-
-- Click the ➕ button to upload PDF, text, or image files
-- Or paste a URL directly in the input bar
-- Files are processed automatically and stored in Vectorize
-
-## 🔌 API Endpoints
-
-### Health Check
-```bash
-GET /api/health
-```
-
-### Chat
-```bash
-POST /api/chat
-Content-Type: application/json
-
-{
-  "message": "Your question here",
-  "sessionId": "optional-session-id"
-}
-```
-
-### Document Upload
-```bash
-POST /api/upload
-Content-Type: multipart/form-data
-
-file: [PDF/Text/Image file]
-```
-
-## 🧪 Testing
-
-### Test Chat API
-```bash
-curl -X POST http://localhost:8787/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "What is the weather in San Francisco?",
-    "sessionId": "test-session"
-  }'
-```
-
-### Test Document Upload
-```bash
-curl -X POST http://localhost:8787/api/upload \
-  -F "file=@document.pdf"
-```
-
-## 📁 Project Structure
-
-```
-.
-├── src/
-│   ├── index.js           # Main Worker entry point
-│   ├── workflow.js         # AI agent workflow with function calling
-│   ├── functions.js        # Tool definitions and implementations
-│   ├── rag.js             # RAG implementation (chunking, embeddings, Vectorize)
-│   └── chat-session.js    # Durable Object for session management
-├── cf_ai_chat-assistant/
-│   └── index.html         # Frontend chat interface
-├── wrangler.toml          # Cloudflare configuration
-├── package.json           # Dependencies
-├── run-local.sh           # Local development script
-├── setup-vectorize.sh     # Vectorize index setup script
-└── README.md              # This file
-```
-
-## 🔧 Configuration
-
-### wrangler.toml
-
-- **AI Binding**: `@cloudflare/ai` for Llama 3.3
-- **Vectorize**: `rag-documents` index (384 dimensions, cosine metric)
-- **Durable Objects**: `ChatSession` for conversation state
-
-### Environment Variables
-
-- `AI_BINDING` - Cloudflare Workers AI binding
-- `VECTORIZE_BINDING` - Vectorize index binding
-- `CHAT_SESSION_BINDING` - Durable Object binding
-
-## 🚀 Deployment
-
-### Deploy to Cloudflare
+Once everything is set up, just run:
 
 ```bash
-# Deploy to production
-wrangler deploy
-
-# Deploy to staging
-wrangler deploy --env staging
+./run-local.sh
 ```
 
-### Verify Deployment
-
+Or if you prefer npm:
 ```bash
-# Check Vectorize index
-wrangler vectorize list
-
-# Check Durable Objects
-wrangler durable-objects list
+npm run dev
 ```
 
-## 🛠️ Development
+The script will start the Cloudflare Worker in development mode. You'll see output showing it's connecting to Vectorize and Workers AI.
 
-### Local Development
+Then open your browser to:
+- **Chat Interface**: http://localhost:3000/cf_ai_chat-assistant/
+- **Health Check**: http://localhost:8787/api/health
 
-The project uses `wrangler dev` with remote bindings to enable:
-- Vectorize bindings (requires remote connection)
-- Workers AI access
-- Durable Objects
+**Note**: The chat interface runs on port 3000 (served by a Python HTTP server), while the API runs on port 8787 (Cloudflare Worker).
 
-**Note**: Vectorize requires remote mode (not `--local`)
+The chat interface is pretty intuitive - just type your question and hit enter. You can also:
+- Click the ➕ button to upload files
+- Click the 🎤 icon for voice input
+- Paste URLs directly in the chat
 
-### Response Quality & Formatting
+## Architecture Details
 
-The AI is configured to provide high-quality, well-formatted responses:
-- **TL;DR First**: Every response starts with a concise 1-2 sentence summary (highlighted in blue box)
-- **Structured Format**: Clear step-by-step breakdowns with numbered sections
-- **Streaming**: Token-by-token streaming for real-time response display
-- **Visual Hierarchy**: Proper headings, bullet points, and code blocks
-- **Code Formatting**: Syntax highlighting, copy buttons, preserved indentation
-- **Error Handling**: Confidence indicators when tools fail or information is uncertain
-- **Clean Output**: No verbose tool mentions or unnecessary disclaimers
-- **Complete Responses**: Increased token limit (4000) to ensure full, complete answers
+### Core Components
 
-## 📝 Key Technologies
+**Frontend (`cf_ai_chat-assistant/index.html`)**
+- Simple HTML/CSS/JavaScript chat interface
+- Handles streaming responses, file uploads, voice input
+- Dark mode support with localStorage persistence
 
-- **Cloudflare Workers AI**: Llama 3.3 for AI responses with streaming support
-- **Cloudflare Vectorize**: Vector database for RAG with automatic retry logic
-- **Cloudflare Durable Objects**: Persistent session state
-- **BGE Embeddings**: `@cf/baai/bge-small-en-v1.5` for document embeddings
-- **Prism.js**: Syntax highlighting for code blocks
-- **Web Speech API**: Voice input in browser
-- **Server-Sent Events (SSE)**: Streaming responses via text/event-stream
-- **Vision Models**: LLaVA, UForm, Llama Vision for image understanding
+**Main Worker (`src/index.js`)**
+- Handles all HTTP requests
+- Routes to chat, upload, and health endpoints
+- Manages CORS and error handling
 
-## 🎯 How Function Calling Works
+**Workflow Engine (`src/workflow.js`)**
+- Orchestrates the AI agent logic
+- Detects when tools are needed
+- Manages the conversation flow
+- Handles function calling and tool execution
 
-1. **User asks a question** (e.g., "What's the weather in SF?")
-2. **AI analyzes** the question and decides to use `get_weather` tool
-3. **Tool executes** and returns weather data
-4. **AI synthesizes** the tool result into a natural response
-5. **User receives** a direct answer (no mention of tools)
+**Function Registry (`src/functions.js`)**
+- Defines available tools (search_web, get_weather, etc.)
+- Implements each tool's logic
+- Returns structured results for the AI
 
-The AI autonomously decides when tools are needed!
+**RAG System (`src/rag.js`)**
+- Handles document processing (PDF extraction, image understanding)
+- Creates embeddings using BGE model
+- Manages Vectorize storage and retrieval
+- Handles race conditions for image indexing
 
-## 📚 RAG Pipeline
+**Session Management (`src/chat-session.js`)**
+- Durable Object for persistent chat sessions
+- Stores conversation history
+- Maintains context across messages
 
-1. **Document Upload**: PDF/text file, image, or URL
-2. **Text Extraction**: 
-   - PDFs: Extract text from BT/ET blocks, text objects, streams (with metadata filtering)
-   - Images: Use vision models to generate descriptions (with `[IMAGE DESCRIPTION]` prefix)
-   - URLs: Fetch and extract HTML content
-3. **Chunking**: Split into ~500 character chunks with 50 character overlap (filtered for quality)
-4. **Embedding**: Create 384-dimensional vectors using BGE model
-5. **Storage**: Store in Vectorize with metadata, timestamps, and document IDs
-6. **Query**: User asks question about document
-7. **Similarity Search**: Find relevant chunks using vector similarity
-   - **Race Condition Handling**: If image not found, retry with document ID query (exponential backoff)
-   - **Image Prioritization**: Always use most recent image, filter out older images
-8. **Context Injection**: Add relevant chunks to AI prompt (only from most recent document for images)
-9. **Response**: AI answers using document context (streamed token-by-token)
+### Technical Stack
 
-## 🎯 AI Capabilities
+- **AI Model**: Llama 3.3 70B (via Cloudflare Workers AI)
+- **Embeddings**: BGE-small-en-v1.5 (384 dimensions)
+- **Vector Database**: Cloudflare Vectorize
+- **Session Storage**: Cloudflare Durable Objects
+- **Vision Models**: LLaVA, UForm, Llama Vision (for images)
 
-The AI is configured as a smart digital helper that can assist with:
+### How Tools Are Triggered
 
-- **Programming**: Debug code, explain concepts, write code snippets, review code
-- **Studying**: Explain CS concepts, help with homework, break down complex topics
-- **Writing**: Help with emails, resumes, LinkedIn posts, documentation
-- **Problem-Solving**: Guide through problems step-by-step with clear explanations
-- **Career**: Interview prep, portfolio review, project ideas, career advice
-- **General Knowledge**: Answer questions with current information (uses web search for 2025 data)
+The system uses a combination of:
+1. **Keyword detection** - Looks for words like "weather", "2025", "calculate"
+2. **Auto-trigger logic** - Automatically calls tools when needed (no need for the AI to explicitly request)
+3. **Context awareness** - Understands when current information is needed vs. general knowledge
 
-### Response Format
+For example, if you ask "Who is the president in 2026?", the system automatically:
+- Detects "2026" keyword
+- Triggers `search_web` with the query
+- Gets current information
+- AI uses that to answer accurately
 
-The AI provides well-structured responses with:
-- **TL;DR Summary**: Quick 1-2 sentence summary at the top (highlighted in blue box, no "TL;DR:" label)
-- **Structured Content**: Clear step-by-step breakdowns with numbered sections
-- **Code Examples**: Properly formatted code blocks with syntax highlighting (Prism.js) and copy buttons
-- **Streaming Display**: Real-time token-by-token rendering for instant feedback
-- **Visual Hierarchy**: Headings, bullet points, and clear sections for easy reading
-- **Confidence Indicators**: Visual warnings when information may be uncertain
-- **Complete Answers**: Full responses with no truncation (4000 token limit)
+### Document Processing Flow
 
-## 🤝 Contributing
+1. **Upload** → File/URL received
+2. **Extract** → Text from PDF, description from image, content from URL
+3. **Chunk** → Split into ~500 character pieces with overlap
+4. **Embed** → Convert to 384-dimensional vectors
+5. **Store** → Save in Vectorize with metadata
+6. **Query** → When you ask, find similar chunks
+7. **Respond** → AI uses chunks to answer your question
 
-This is a production-ready AI agent implementation. Key improvements could include:
-
-- Additional tools (email, calendar, etc.)
-- Better PDF parsing (using pdf.js)
-- Multi-language support
-- User authentication
-- Enhanced image processing
-- Hybrid search (BM25 + vector search)
-- Semantic chunking improvements
-
-## 📄 License
-
-MIT
-
-## 🙏 Acknowledgments
-
-- Cloudflare Workers AI for Llama 3.3
-- Cloudflare Vectorize for vector storage
-- Cloudflare Durable Objects for session management
-- DuckDuckGo API for web search
-- Wikipedia API for authoritative information
+The system is smart about filtering out PDF metadata and noise, so you get clean, relevant content.
 
 ---
 
-**Built with ❤️ using Cloudflare Workers AI**
+**Built with Cloudflare Workers AI** - Fast, scalable, and serverless.
