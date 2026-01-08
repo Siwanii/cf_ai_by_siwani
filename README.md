@@ -22,12 +22,12 @@ Hey there! 👋 I'm Siwani, and this is my AI assistant that I built. It's not p
             │   (Backend API)  │
             └──────────────────┘
                     │
-            ┌───────┴────────┬──────────┐
-            ▼                ▼          ▼
-      ┌──────────┐   ┌─────────────┐  ┌──────────┐
-      │Workers AI│   │  Vectorize  │  │ R2 Bucket│
-      │(Llama 3.3│   │(Embeddings) │  │(Files)   │
-      │& Vision) │   └─────────────┘  └──────────┘
+            ┌───────┴────────┐
+            ▼                ▼
+      ┌──────────┐   ┌─────────────┐
+      │Workers AI│   │  Vectorize  │
+      │(Llama 3.3│   │(Embeddings) │
+      │& Vision) │   └─────────────┘
       └──────────┘
 ```
 
@@ -50,7 +50,7 @@ Agent: "It's currently 18°C and sunny in Paris!"
 ```
 
 **Available Tools:**
-- `web_search` - Search the web for current information
+- `search_web` - Search the web for current information
 - `get_weather` - Get real-time weather data
 - `calculate` - Perform mathematical calculations
 - `get_current_time` - Get current time in any timezone
@@ -102,33 +102,31 @@ npm install
 npx wrangler login
 
 # Create the database for embeddings
-npx wrangler vectorize create ai-agent-vectorize --dimensions=768 --metric=cosine
+npx wrangler vectorize create rag-documents --dimensions=384 --metric=cosine
 
-# Create storage for documents
-npx wrangler r2 bucket create ai-agent-documents
+# Or use the setup script:
+./setup-vectorize.sh
 ```
 
 ### 4. Configure your environment
 
-Edit `wrangler.toml` (or create it):
+The `wrangler.toml` file is already configured, but here's what it looks like:
 
 ```toml
-name = "cf-ai-agent"
+name = "ai-chat-assistant"
 main = "src/index.js"
-compatibility_date = "2025-09-01"
+compatibility_date = "2025-01-01"
+
+[ai]
+binding = "AI"
 
 [[vectorize]]
 binding = "VECTORIZE"
-index_name = "ai-agent-vectorize"
-
-[[r2_buckets]]
-binding = "R2"
-bucket_name = "ai-agent-documents"
+index_name = "rag-documents"
 
 [[durable_objects.bindings]]
 name = "CHAT_SESSION"
 class_name = "ChatSession"
-script_name = "cf-ai-agent"
 ```
 
 
@@ -243,7 +241,7 @@ Contributions are welcome! Here's how:
 ## 🔐 Security & Privacy
 
 - All data encrypted in transit (HTTPS)
-- Documents stored securely in R2
+- Documents stored securely in Vectorize (Cloudflare's managed service)
 - Session data isolated via Durable Objects
 - No data shared with third parties
 - Self-host for complete control
