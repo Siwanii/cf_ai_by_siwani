@@ -3,7 +3,7 @@
  * Handles complex multi-step AI interactions with function calling (tool use)
  * Transforms the system from a chatbot to an intelligent agent that can decide when to use tools
  */
-
+import { webSearch } from './tools.js';
 import { AVAILABLE_FUNCTIONS, executeFunction } from './functions.js';
 
 export class ChatWorkflow {
@@ -367,8 +367,15 @@ export class ChatWorkflow {
           const functionResults = [];
           for (const funcCall of functionCalls) {
             try {
-              const result = await executeFunction(funcCall.name, funcCall.arguments || {});
-              
+
+              let result;
+      
+                if (funcCall.name === 'web_search') {
+                  console.log(`🔍 Executing web search: "${funcCall.arguments.query}"`);
+                  result = await webSearch(funcCall.arguments.query, env);
+                } else {
+                  result = await executeFunction(funcCall.name, funcCall.arguments || {});
+                }
               functionResults.push({
                 name: funcCall.name,
                 result: result
@@ -628,12 +635,12 @@ export class ChatWorkflow {
           finalResponse = {
             content: `I apologize, but I'm unable to process your request because Cloudflare authentication is required.
 
-To fix this, please run:
-1. \`wrangler login\` to authenticate with Cloudflare
-2. Or ensure you're logged in with: \`wrangler whoami\`
+          To fix this, please run:
+          1. \`wrangler login\` to authenticate with Cloudflare
+          2. Or ensure you're logged in with: \`wrangler whoami\`
 
-This is required to use Cloudflare Workers AI. Once authenticated, I'll be able to help you!`,
-            model: 'error-auth',
+          This is required to use Cloudflare Workers AI. Once authenticated, I'll be able to help you!`,
+           model: 'error-auth',
             timestamp: Date.now(),
             error: 'Authentication required',
             toolsUsed: [],
@@ -673,12 +680,12 @@ This is required to use Cloudflare Workers AI. Once authenticated, I'll be able 
               finalResponse = {
                 content: `I apologize, but I'm unable to process your request because Cloudflare authentication is required.
 
-To fix this, please run:
-1. \`wrangler login\` to authenticate with Cloudflare
-2. Or ensure you're logged in with: \`wrangler whoami\`
+                To fix this, please run:
+                1. \`wrangler login\` to authenticate with Cloudflare
+                2. Or ensure you're logged in with: \`wrangler whoami\`
 
-This is required to use Cloudflare Workers AI. Once authenticated, I'll be able to help you!`,
-                model: 'error-auth',
+                This is required to use Cloudflare Workers AI. Once authenticated, I'll be able to help you!`,
+               model: 'error-auth',
                 timestamp: Date.now(),
                 error: 'Authentication required',
                 toolsUsed: [],
@@ -714,6 +721,10 @@ This is required to use Cloudflare Workers AI. Once authenticated, I'll be able 
       functionCallsExecuted: functionCallsExecuted,
       iterations: iteration
     };
+
+
+
+
   }
 
   // Detect when the agent decides to use a function/tool
@@ -1112,6 +1123,14 @@ This is required to use Cloudflare Workers AI. Once authenticated, I'll be able 
 
 CURRENT YEAR: 2026
 CURRENT DATE: ${currentDate}
+
+
+CRITICAL KNOWLEDGE UPDATE (2026):
+- The President of the United States is Donald J. Trump. He was sworn in for his second, non-consecutive term on January 20, 2025, making him the 47th President of the United States.
+- He won the 2024 presidential election
+- Joe Biden was President from 2021-2025 (previous administration)
+
+
 ${hasRagContext ? (isImageContext 
   ? '\n🖼️ IMAGE MODE: The user has uploaded an IMAGE. An image description will be provided in the user message. This description tells you what is visible in the image. When answering questions about the image, use ONLY this image description. Answer naturally about what you see in the image (e.g., "The image shows...", "In the image, I can see..."). The image description IS the image content - do not say "there is no image" or "no image mentioned" or "I\'m not able to see images". If an image description is provided, you CAN see the image through that description.'
   : '\n📚 DOCUMENT MODE: The user has uploaded a document (PDF, text, or URL). Document content will be provided in the user message. When answering questions about the document, use ONLY the document content. You can summarize, explain, analyze, or answer questions about it.') : '\n⚠️ NO DOCUMENT/IMAGE CONTEXT: If the user asks about an image but no context is provided, the image may still be processing (this can take 15-30 seconds after upload). Say: "The image may still be processing. Please wait a moment and try asking again, or upload the image again if it\'s been more than 30 seconds." For documents, say "I don\'t see any uploaded document. Please upload a document first, then ask me about it."'}
@@ -1271,7 +1290,7 @@ RESPONSE STYLE - CRITICAL FORMATTING RULES:
   
   [Brief summary if needed]
 - Be like ChatGPT - helpful, knowledgeable, natural, and well-formatted`;
-
+    
     // Add emphasis if current information is required
     if (requiresCurrentInfo) {
       agentPrompt += `\n\n⚠️ CRITICAL REMINDER: The user's question requires 2025/2026 information. The current year is 2026. You MUST use the search_web tool to get current 2025/2026 information. Do NOT rely on your training data which is from before 2025. Provide answers that are accurate as of 2026.`;
@@ -1317,3 +1336,5 @@ RESPONSE STYLE - CRITICAL FORMATTING RULES:
 export function createChatWorkflow() {
   return new ChatWorkflow();
 }
+
+// Find the tools array in createChatWorkflow() and add this tool

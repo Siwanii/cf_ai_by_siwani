@@ -5,7 +5,7 @@
  */
 
 import { ChatSession } from './chat-session.js';
-import { createChatWorkflow } from './workflow.js';
+import { ChatWorkflow } from './workflow.js';
 import { processDocument, similaritySearch, queryByDocumentId } from './rag.js';
 
 export default {
@@ -610,7 +610,8 @@ export default {
 
       // Use workflow to process the chat request
       // Add timeout to prevent 504 Gateway Timeout errors
-      const workflow = createChatWorkflow();
+     const workflow = new ChatWorkflow();
+      await workflow.defineWorkflow(); // Initialize the workflow steps
       const workflowPromise = workflow.execute({
         message,
         sessionId: sessionId || 'default',
@@ -721,16 +722,49 @@ This is required to use Cloudflare Workers AI. Once authenticated, I'll be able 
 
   async callLlamaAI(env, messages) {
     try {
-      // Prepare the prompt for Llama 3.3
-      const systemPrompt = `You are a helpful AI assistant. You are having a conversation with a user. 
-      Be friendly, informative, and helpful. Keep your responses concise but engaging. 
-      If you don't know something, say so honestly.`;
+       const currentDate = new Date().toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+         });
+    
+    const systemPrompt = `You are a helpful AI assistant with access to web search capabilities. Today's date is ${currentDate}.
 
-      // Format messages for Llama 3.3
-      const formattedMessages = [
-        { role: 'system', content: systemPrompt },
-        ...messages
-      ];
+**CRITICAL KNOWLEDGE UPDATE (2026)**:
+- Donald Trump is the current President of the United States (inaugurated January 20, 2025)
+- He won the 2024 presidential election
+- Joe Biden was President from 2021-2025 (previous administration)
+
+**IMPORTANT - Using Current Information**:
+- Your training data has a knowledge cutoff and does NOT include events after mid-2024
+- For questions about current events, recent news, current world leaders, or anything that may have changed recently, you MUST use the web_search tool
+- When users ask about "current president", "who is president now", or similar questions about 2025-2026, use the information above OR the web_search tool for verification
+- Examples that REQUIRE web search: "Latest news?", "Current weather", "Recent events", "Who won yesterday's game?", "What happened today?"
+
+**When to use web_search tool**:
+1. Current events or breaking news
+2. Recent changes in leadership, politics, or government (for verification beyond what's stated above)
+3. Sports scores, weather, stock prices
+4. Any question with words like: "latest", "recent", "today", "now", "current" (when asking about things that change frequently)
+5. When you need to verify information beyond your training data
+
+**When NOT to use web_search**:
+1. Historical facts (before 2024) - you already know these
+2. General knowledge that doesn't change (like "What is photosynthesis?")
+3. User asks about uploaded documents (use document context from RAG instead)
+4. Math, coding, or logic problems
+5. Questions about current president/leadership where the information is already provided above
+
+Be friendly, informative, and helpful. Keep your responses concise but engaging.
+If asked about the current president, you can confidently answer based on the information above.
+Always cite sources when using web search results.`;
+  
+    // Format messages for Llama 3.3
+    const formattedMessages = [
+      { role: 'system', content: systemPrompt },
+      ...messages
+    ];
+
 
       // Call Llama 3.3 via Workers AI
       const response = await env.AI.run('@cf/meta/llama-3.3-70b-instruct', {
