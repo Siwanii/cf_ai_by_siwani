@@ -11,7 +11,8 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // CORS headers for development
+    // CORS headers - I set these pretty permissive for development, you'd want to lock
+    // this down in production
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -26,7 +27,7 @@ export default {
       });
     }
 
-  // route to the right handler
+  // Route requests to the right handler - simple switch statement, nothing fancy
     switch (path) {
 
       case '/':
@@ -73,11 +74,12 @@ export default {
         });
       }
 
-      // Get or create Durable Object instance
+      // Get the chat session - Durable Objects are Cloudflare's way of keeping state
+      // between requests, which is perfect for conversation history
       const durableObjectId = env.CHAT_SESSION.idFromName(sessionId || 'default');
       const durableObject = env.CHAT_SESSION.get(durableObjectId);
 
-      // Prepare conversation context for AI
+      // Build up the conversation history so the AI remembers what we talked about
       const messages = conversationHistory.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -89,7 +91,9 @@ export default {
         content: message
       });
 
-      // Perform RAG similarity search if Vectorize is available
+      // Check if they're asking about a document they uploaded - if so, search for
+      // relevant chunks in Vectorize. I made it smart enough to not search on
+      // simple greetings, which was annoying before
       let ragContext = '';
       try {
         // Detect document-related requests (summarize, explain, analyze, etc.)

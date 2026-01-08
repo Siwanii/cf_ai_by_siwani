@@ -1,6 +1,7 @@
 
-// RAG (Retrieval-Augmented Generation) Module
-// Handles document processing, chunking, embeddings, and vector search
+// This is the RAG (Retrieval-Augmented Generation) module - it handles all the
+// document stuff. When you upload a PDF or image, this processes it, chunks it up,
+// creates embeddings, and stores everything in Vectorize so the AI can find it later
 
 
 const EMBEDDING_MODEL = '@cf/baai/bge-small-en-v1.5';
@@ -8,11 +9,9 @@ const CHUNK_SIZE = 500; // Characters per chunk
 const CHUNK_OVERLAP = 50; // Overlap between chunks
 const TOP_K = 3; // Number of similar chunks to retrieve
 
-/**
- * Chunk text into smaller pieces for embedding
- * @param {string} text - Text to chunk
- * @returns {Array<string>} Array of text chunks
- */
+// Split text into chunks - I use 500 characters with 50 char overlap because
+// that seems to work well. I also try to break at sentence boundaries so chunks
+// make more sense. Filtering out PDF metadata was a pain but necessary
 export function chunkText(text) {
   const chunks = [];
   let start = 0;
@@ -78,16 +77,14 @@ export function chunkText(text) {
   return chunks;
 }
 
-/**
- * Extract text from PDF
- * Note: This is a basic implementation. For production, consider using a PDF parsing service
- * @param {ArrayBuffer} pdfData - PDF file data
- * @returns {Promise<string>} Extracted text
- */
+// Extracts text from PDFs - this was tricky because PDFs are messy
+// I extract from BT/ET blocks and filter out all the metadata junk
+// It's not perfect but it works for most PDFs. For production you'd want
+// a proper PDF library, but this gets the job done
 export async function extractTextFromPDF(pdfData) {
-  // PDF text extraction with metadata filtering
-  // Note: This is still a basic implementation. For production, consider using a PDF parsing service
-  // or converting PDFs to text on the client side before uploading
+  // Filtering out PDF metadata was a nightmare - there's so much junk in there
+  // I learned to look for specific patterns and skip anything that looks like
+  // structure/metadata rather than actual content
   
   try {
     const uint8Array = new Uint8Array(pdfData);
@@ -274,11 +271,8 @@ export async function extractTextFromPDF(pdfData) {
   }
 }
 
-/**
- * Fetch and extract text from a URL
- * @param {string} url - URL to fetch
- * @returns {Promise<string>} Extracted text content
- */
+// Fetches text from a URL - handles HTML by stripping tags, or just returns
+// plain text if that's what it is. Pretty straightforward
 export async function extractTextFromURL(url) {
   try {
     const response = await fetch(url);
@@ -308,12 +302,9 @@ export async function extractTextFromURL(url) {
   }
 }
 
-/**
- * Create embeddings for text chunks
- * @param {Array<string>} chunks - Text chunks to embed
- * @param {object} env - Environment with AI binding
- * @returns {Promise<Array<Array<number>>>} Array of embedding vectors
- */
+// Creates embeddings using the BGE model - this converts text into vectors
+// that can be searched. The model returns different formats sometimes, so I
+// had to handle a bunch of edge cases. Fun times!
 export async function createEmbeddings(chunks, env) {
   if (!env.AI) {
     throw new Error('AI binding not available');
@@ -455,14 +446,9 @@ export async function createEmbeddings(chunks, env) {
   return embeddings;
 }
 
-/**
- * Store chunks and embeddings in Vectorize
- * @param {Array<string>} chunks - Text chunks
- * @param {Array<Array<number>>} embeddings - Embedding vectors
- * @param {string} documentId - Unique document identifier
- * @param {object} env - Environment with Vectorize binding
- * @returns {Promise<void>}
- */
+// Stores everything in Vectorize - the chunks, embeddings, and metadata
+// I include timestamps so we can prioritize recent documents. Also had to
+// validate everything because Vectorize is picky about data types
 export async function storeInVectorize(chunks, embeddings, documentId, env) {
   // Check for Vectorize binding (try different possible names)
   const vectorize = env.VECTORIZE || env.vectorize || env.Vectorize;
@@ -569,15 +555,9 @@ export async function storeInVectorize(chunks, embeddings, documentId, env) {
   }
 }
 
-/**
- * Query Vectorize by document ID directly (bypasses similarity search)
- * Useful for race condition: when image is just uploaded and not yet indexed
- * @param {string} documentId - Document ID to query
- * @param {object} env - Environment with Vectorize binding
- * @param {number} maxRetries - Maximum number of retries
- * @param {number} initialDelay - Initial delay in milliseconds
- * @returns {Promise<Array<{text: string, score: number, metadata: object}>>} Chunks from the document
- */
+// Queries Vectorize by document ID - I added this because of a race condition
+// where images would be uploaded but not indexed yet. This bypasses similarity
+// search and just grabs chunks by ID, with retries because indexing takes time
 export async function queryByDocumentId(documentId, env, maxRetries = 5, initialDelay = 2000) {
   const vectorize = env.VECTORIZE || env.vectorize || env.Vectorize;
   if (!vectorize) {
@@ -666,13 +646,9 @@ export async function queryByDocumentId(documentId, env, maxRetries = 5, initial
   return [];
 }
 
-/**
- * Perform similarity search in Vectorize
- * @param {string} query - Search query
- * @param {object} env - Environment with AI and Vectorize bindings
- * @param {number} topK - Number of results to return
- * @returns {Promise<Array<{text: string, score: number, metadata: object}>>} Similar chunks
- */
+// Does the actual similarity search - converts the query to an embedding,
+// searches Vectorize, and filters out junk. I filter pretty aggressively
+// because PDF metadata was showing up in results and that was annoying
 export async function similaritySearch(query, env, topK = TOP_K) {
   // Check for Vectorize binding (try different possible names)
   const vectorize = env.VECTORIZE || env.vectorize || env.Vectorize;
@@ -844,12 +820,10 @@ export async function similaritySearch(query, env, topK = TOP_K) {
   }
 }
 
-/**
- * Extract text from image using OCR/image understanding
- * @param {ArrayBuffer} imageData - Image file data
- * @param {object} env - Environment with AI binding
- * @returns {Promise<string>} Extracted text description
- */
+// Extracts text/description from images using vision models - I try multiple
+// models because they're not all available on every plan. The base64 conversion
+// was a pain but necessary. Also handles different response formats because
+// nothing is ever consistent
 async function extractTextFromImage(imageData, env) {
   try {
     const uint8Array = new Uint8Array(imageData);
@@ -1055,14 +1029,9 @@ async function extractTextFromImage(imageData, env) {
   }
 }
 
-/**
- * Process and store a document (PDF, URL, Text, or Image)
- * @param {string} source - URL, text content, or document identifier
- * @param {string} type - 'url', 'pdf', 'text', or 'image'
- * @param {ArrayBuffer|null} fileData - File data if type is 'pdf' or 'image'
- * @param {object} env - Environment with AI and Vectorize bindings
- * @returns {Promise<{documentId: string, chunks: number}>}
- */
+// Main function that processes any document type - handles the whole pipeline:
+// extract text, chunk it, create embeddings, store in Vectorize. This is what
+// gets called when someone uploads a file or pastes a URL
 export async function processDocument(source, type, fileData, env) {
   try {
     let text = '';

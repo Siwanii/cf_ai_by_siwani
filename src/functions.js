@@ -103,12 +103,8 @@ export const AVAILABLE_FUNCTIONS = [
   }
 ];
 
-/**
- * Execute a function call based on the function name and arguments
- * @param {string} functionName - Name of the function to execute
- * @param {object} args - Arguments for the function
- * @returns {Promise<object>} Function execution result
- */
+// When the AI decides to use a tool, this function actually runs it
+// I made it a switch statement because it's cleaner than a bunch of if/else
 export async function executeFunction(functionName, args) {
 
   switch (functionName) {
@@ -132,10 +128,8 @@ export async function executeFunction(functionName, args) {
   }
 }
 
-/**
- * Get weather information for a location
- * Note: This is a mock implementation. In production, you would call a real weather API
- */
+// Gets the weather - right now it's using mock data since I didn't want to deal
+// with API keys, but you could easily swap this out for OpenWeatherMap or similar
 async function getWeather(location, unit = 'celsius') {
   // Mock weather data - In production, call a real API like OpenWeatherMap
   const mockWeather = {
@@ -168,9 +162,8 @@ async function getWeather(location, unit = 'celsius') {
   };
 }
 
-/**
- * Perform mathematical calculations
- */
+// Does math stuff - I sanitize the input first because you can't trust user input
+// In production you'd want a proper math parser library, but this works for now
 async function calculate(expression) {
   try {
     // Sanitize expression to only allow safe math operations
@@ -197,9 +190,7 @@ async function calculate(expression) {
   }
 }
 
-/**
- * Get current date and time
- */
+// Returns the current time - pretty straightforward, handles timezones if you give it one
 async function getCurrentTime(timezone) {
   try {
     const now = timezone 
@@ -230,10 +221,9 @@ async function getCurrentTime(timezone) {
   }
 }
 
-/**
- * Search the web for information using multiple sources for accurate, up-to-date results
- * Uses DuckDuckGo API and Wikipedia API for comprehensive information
- */
+// This is the web search function - I use DuckDuckGo and Wikipedia because they're free
+// and don't require API keys. It tries multiple strategies to get good results,
+// especially for current events and 2025/2026 information
 async function searchWeb(query) {
   try {
     const lowerQuery = query.toLowerCase();
@@ -458,10 +448,8 @@ async function searchWeb(query) {
   }
 }
 
-/**
- * Convert currency between different units
- * Note: This is a mock implementation. In production, you would call a real currency API
- */
+// Currency conversion - also using mock rates for now. You'd want to use a real
+// exchange rate API in production, but this is fine for testing
 async function convertCurrency(amount, from, to) {
   // Mock exchange rates - In production, call a real API like ExchangeRate-API, Fixer.io, etc.
   const exchangeRates = {

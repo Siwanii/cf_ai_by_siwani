@@ -12,7 +12,8 @@ export class ChatWorkflow {
     this.isComplete = false;
   }
 
-  // Define workflow steps
+  // Set up the workflow steps - each one has a handler and retry count
+  // I learned the hard way that AI APIs can be flaky, so retries are essential
   async defineWorkflow() {
     this.steps = [
       {
@@ -43,7 +44,8 @@ export class ChatWorkflow {
     ];
   }
 
-  // Execute the workflow
+  // Run the workflow - goes through each step, retrying if something fails
+  // I use exponential backoff because hammering the API doesn't help
   async execute(input, env) {
     try {
       await this.defineWorkflow();
@@ -91,7 +93,8 @@ export class ChatWorkflow {
     }
   }
 
-  // Step 1: Validate input
+  // First step: make sure the input is actually valid before we do anything
+  // Learned this lesson after getting weird errors from bad input
   async validateInput() {
     const { input } = this.state;
     
@@ -111,7 +114,9 @@ export class ChatWorkflow {
     
   }
 
-  // Step 2: Prepare context for AI
+  // Second step: build up the context for the AI - conversation history, 
+  // document context if they uploaded something, and figure out if we need
+  // current information (which triggers web search)
   async prepareContext() {
     const { input } = this.state;
     
@@ -255,7 +260,8 @@ export class ChatWorkflow {
     
   }
 
-  // Detect if a message requires current/up-to-date information
+  // Check if the question needs current info - I look for keywords like "2025",
+  // "current", "president", etc. This helps decide when to use web search
   requiresCurrentInformation(message) {
     const lowerMessage = message.toLowerCase();
     
@@ -310,8 +316,9 @@ export class ChatWorkflow {
     return false;
   }
 
-  // Step 3: Call AI Agent with function calling (tool use) capabilities
-  // This transforms the system from a chatbot to an intelligent agent
+  // Third step: actually call the AI. This is where the magic happens - the AI
+  // can decide to use tools, and we handle that in a loop until it's done
+  // I limit it to 5 iterations because sometimes it gets stuck
   async callAIAgent() {
     const { context, env } = this.state;
     
@@ -725,8 +732,9 @@ export class ChatWorkflow {
 
   }
 
-  // Detect when the agent decides to use a function/tool
-  // This is the core of the agent's decision-making capability
+  // Figure out if the AI wants to use a tool - this is the tricky part
+  // I check multiple ways: structured tool_calls, function_call property, or
+  // parsing from the response text. Also auto-trigger for obvious cases like weather
   detectAgentFunctionCalls(responseText, rawResponse) {
     const functionCalls = [];
     
@@ -1001,7 +1009,8 @@ export class ChatWorkflow {
     return args;
   }
 
-  // Step 4: Process AI response
+  // Fourth step: clean up the AI's response - remove verbose tool mentions,
+  // filter out noise, make sure it's actually readable
   async processResponse() {
     const { aiResponse } = this.state;
     
@@ -1049,7 +1058,8 @@ export class ChatWorkflow {
     });
   }
 
-  // Step 5: Update state and prepare result (with agent metadata)
+  // Last step: package everything up and return it - includes metadata about
+  // what tools were used, how many iterations, etc. Useful for debugging
   async updateState() {
     const { input, processedResponse, context, agentMetadata, aiResponse } = this.state;
     
