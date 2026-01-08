@@ -77,7 +77,7 @@ Ask questions → AI references the description → Accurate answers
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/Siwanii/AgentFlow_AI.git
-cd cf_ai_by_siwani
+cd AgentFlow_AI
 ```
 
 ### 2. Install Dependencies
@@ -184,9 +184,9 @@ For example, if you ask "Who is the president in 2026?", the system automaticall
 Contributions are welcome! Here's how:
 
 1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+2. **Create a feature branch**: `git checkout -b amazing-feature`
 3. **Commit your changes**: `git commit -m 'Add amazing feature'`
-4. **Push to branch**: `git push origin feature/amazing-feature`
+4. **Push to branch**: `git push origin amazing-feature`
 5. **Open a Pull Request**
 
 ### Development Guidelines
