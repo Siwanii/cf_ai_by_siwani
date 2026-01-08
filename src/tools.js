@@ -1,9 +1,6 @@
-/**
- * Search the web for current information using DuckDuckGo Instant Answer API
- * @param {string} query - The search query
- * @param {object} env - Cloudflare environment bindings
- * @returns {Promise<object>} Search results
- */
+// ok so this searches the web when the AI needs current info
+// took me forever to get the API working properly 
+
 export async function webSearch(query, env) {
   try {
     console.log(`🔍 Web search for: "${query}"`);

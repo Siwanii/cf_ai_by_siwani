@@ -1,7 +1,5 @@
-/**
- * Durable Object for managing chat sessions and conversation state
- * Provides memory and state management for the AI chat application
- */
+//Durable Object for managing chat sessions and conversation state
+//Provides memory and state management for the AI chat application
 
 export class ChatSession {
   constructor(state, env) {

@@ -1,8 +1,6 @@
-/**
- * Cloudflare Workflow for coordinating AI Agent operations
- * Handles complex multi-step AI interactions with function calling (tool use)
- * Transforms the system from a chatbot to an intelligent agent that can decide when to use tools
- */
+// workflow orchestration
+// handles the multi-step process of: validate → prepare → call AI → process response
+
 import { webSearch } from './tools.js';
 import { AVAILABLE_FUNCTIONS, executeFunction } from './functions.js';
 

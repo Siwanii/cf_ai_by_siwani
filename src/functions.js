@@ -1,12 +1,6 @@
-/**
- * Function Registry for AI Function Calling
- * Defines available functions that Llama 3.3 can call to interact with external APIs
- */
+// Available functions that the AI can call
+//Format follows OpenAI function calling schema for compatibility
 
-/**
- * Available functions that the AI can call
- * Format follows OpenAI function calling schema for compatibility
- */
 export const AVAILABLE_FUNCTIONS = [
   {
     type: 'function',

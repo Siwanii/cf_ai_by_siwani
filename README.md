@@ -8,20 +8,20 @@ Hey there! 👋 I'm Siwani, and this is my AI assistant that I built. It's not p
 ## 🏗️ Architecture
 
 ```
-               User's Browser
-                  │
-                  ▼
-         ┌──────────────────┐
-         │   My Frontend    │  ← Simple HTML/JS 
-         │    Chat UI       │
-         └──────────────────┘
-                  │
-                  ▼
-         ┌──────────────────┐
-         │ Cloudflare Worker│  ← The brain! All logic lives here
-         │   (Backend API)  │
-         └──────────────────┘
-                  │
+                  User's Browser
+                     │
+                     ▼
+            ┌──────────────────┐
+            │   My Frontend    │  ← Simple HTML/JS 
+            │    Chat UI       │
+            └──────────────────┘
+                     │
+                     ▼
+            ┌──────────────────┐
+            │ Cloudflare Worker│  ← The brain! All logic lives here
+            │   (Backend API)  │
+            └──────────────────┘
+                    │
             ┌───────┴────────┬──────────┐
             ▼                ▼          ▼
       ┌──────────┐   ┌─────────────┐  ┌──────────┐
@@ -270,4 +270,4 @@ Project Link: [AgentFlow_AI](https://github.com/Siwanii/AgentFlow_AI)
 
 ---
 
-**Built with ❤️ , determination, and a lot of debugging by Siwani** ☕💻
+**Built with ❤️ , determination, and a lot of debugging by Siwani** 💻

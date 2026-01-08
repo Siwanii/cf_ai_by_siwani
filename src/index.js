@@ -1,8 +1,6 @@
-/**
- * Main Cloudflare Worker for AI Agent
- * Integrates Workers AI (Llama 3.3) with Function Calling (Tool Use)
- * Transforms the system from a chatbot to an intelligent agent that can decide when to use external APIs
- */
+// main worker file
+// handles all the api endpoints and routes requests
+
 
 import { ChatSession } from './chat-session.js';
 import { ChatWorkflow } from './workflow.js';
@@ -20,7 +18,7 @@ export default {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
 
-    // Handle preflight requests
+    // Handle preflight 
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 200,
@@ -28,7 +26,7 @@ export default {
       });
     }
 
-    // Route requests
+  // route to the right handler
     switch (path) {
 
       case '/':
@@ -39,7 +37,6 @@ export default {
     });
     
       case '/api/chat':
-        // Check if streaming is requested
         const url = new URL(request.url);
         const stream = url.searchParams.get('stream') === 'true';
         return this.handleChatRequest(request, env, corsHeaders, stream);

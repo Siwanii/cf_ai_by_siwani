@@ -1,7 +1,7 @@
-/**
- * RAG (Retrieval-Augmented Generation) Module
- * Handles document processing, chunking, embeddings, and vector search
- */
+
+// RAG (Retrieval-Augmented Generation) Module
+// Handles document processing, chunking, embeddings, and vector search
+
 
 const EMBEDDING_MODEL = '@cf/baai/bge-small-en-v1.5';
 const CHUNK_SIZE = 500; // Characters per chunk
