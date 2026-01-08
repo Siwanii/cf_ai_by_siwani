@@ -4,6 +4,11 @@ Hey there! 👋 I'm Siwani, and this is my AI assistant that I built. It's not p
 
 **What it does:** Think ChatGPT, but it can actually search the web, read your documents, and make its own decisions about when to use different tools. Plus, it runs entirely on Cloudflare's edge network (which means it's fast and I don't have to manage any servers).
 
+## 📸 Screenshot
+
+![AI Agent Chat Interface](AgentFlow_AI_Snap.png)
+
+*The chat interface showing the AI assistant in action - powered by Cloudflare Workers AI*
 
 ## 🏗️ Architecture
 
