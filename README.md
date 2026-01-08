@@ -76,7 +76,7 @@ Ask questions → AI references the description → Accurate answers
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/cf_ai_by_siwani.git
+git clone https://github.com/Siwanii/cf_ai_by_siwani.git
 cd cf_ai_by_siwani
 ```
 
@@ -205,9 +205,9 @@ Contributions are welcome! Here's how:
 
 ## 📧 Contact
 
-**Siwani** - [Your LinkedIn](https://linkedin.com/in/yourprofile)
+**Siwani** - [LinkedIn](https://www.linkedin.com/in/siwanisah/)
 
-Project Link: [https://github.com/yourusername/cf_ai_by_siwani](https://github.com/yourusername/cf_ai_by_siwani)
+Project Link: [AgentFlow_AI](https://github.com/Siwanii/cf_ai_by_siwani)
 
 ---
 
@@ -227,7 +227,7 @@ Project Link: [https://github.com/yourusername/cf_ai_by_siwani](https://github.c
 - Documents stored securely in R2
 - Session data isolated via Durable Objects
 - No data shared with third parties
-- Optional: Self-host for complete control
+- Self-host for complete control
 
 
 ---
